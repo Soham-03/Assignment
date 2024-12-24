@@ -10,14 +10,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.myjar.jarassignment.data.model.ComputerItem
 import com.myjar.jarassignment.ui.vm.JarViewModel
+import java.util.ArrayList
 
 @Composable
 fun AppNavigation(
@@ -36,6 +42,9 @@ fun AppNavigation(
 
     NavHost(modifier = modifier, navController = navController, startDestination = "item_list") {
         composable("item_list") {
+            LaunchedEffect(Unit) {
+                viewModel.fetchData()
+            }
             ItemListScreen(
                 viewModel = viewModel,
                 onNavigateToDetail = { selectedItem -> navigate.value = selectedItem },
@@ -58,26 +67,53 @@ fun ItemListScreen(
     navController: NavHostController
 ) {
     val items = viewModel.listStringData.collectAsState()
+    println("items:"+items.value)
 
     if (navigate.value.isNotBlank()) {
         val currRoute = navController.currentDestination?.route.orEmpty()
         if (!currRoute.contains("item_detail")) {
             navController.navigate("item_detail/${navigate.value}")
         }
-    }
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        items(items.value) { item ->
-            ItemCard(
-                item = item,
-                onClick = { onNavigateToDetail(item.id) }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        else{
+            navController.navigate("item_list")
         }
     }
+    Column(){
+        var text by remember {
+            mutableStateOf(TextFieldValue(""))
+        }
+//        val newList = ArrayList<ComputerItem>()
+        TextField(
+            value = text,
+            onValueChange = {
+                text = it
+                for(i in items.value){
+                    if(i.name.contains(text.text)){
+
+//                        newList.add(i)
+                    }
+                }
+//                println("NEWW"+newList)
+
+            },
+            label = { Text("Search") }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyColumn(
+            modifier = Modifier
+                .height(1000.dp)
+                .padding(16.dp)
+        ) {
+            items(items.value) { item ->
+                ItemCard(
+                    item = item,
+                    onClick = { onNavigateToDetail(item.id) }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+
 }
 
 @Composable
@@ -88,7 +124,7 @@ fun ItemCard(item: ComputerItem, onClick: () -> Unit) {
             .padding(8.dp)
             .clickable { onClick() }
     ) {
-        Text(text = item.name, fontWeight = FontWeight.Bold, color = Color.Transparent)
+        Text(text = item.name, fontWeight = FontWeight.Bold, color = Color.White)
     }
 }
 
